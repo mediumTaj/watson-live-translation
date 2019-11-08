@@ -20,7 +20,7 @@ using Newtonsoft.Json;
 namespace IBM.Watson.SpeechToText.V1.Model
 {
     /// <summary>
-    /// SpeakerLabelsResult.
+    /// Information about the speakers from speech recognition results.
     /// </summary>
     public class SpeakerLabelsResult
     {
@@ -56,6 +56,6 @@ namespace IBM.Watson.SpeechToText.V1.Model
         /// `false` means that the service might send further updates to the results.
         /// </summary>
         [JsonProperty("final", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? FinalResults { get; set; }
+        public bool? Final { get; set; }
     }
 }

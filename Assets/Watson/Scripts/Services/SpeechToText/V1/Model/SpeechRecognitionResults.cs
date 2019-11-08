@@ -21,7 +21,7 @@ using Newtonsoft.Json;
 namespace IBM.Watson.SpeechToText.V1.Model
 {
     /// <summary>
-    /// SpeechRecognitionResults.
+    /// The complete results for a speech recognition request.
     /// </summary>
     public class SpeechRecognitionResults
     {
@@ -49,15 +49,26 @@ namespace IBM.Watson.SpeechToText.V1.Model
         [JsonProperty("speaker_labels", NullValueHandling = NullValueHandling.Ignore)]
         public List<SpeakerLabelsResult> SpeakerLabels { get; set; }
         /// <summary>
+        /// If processing metrics are requested, information about the service's processing of the input audio.
+        /// Processing metrics are not available with the synchronous **Recognize audio** method.
+        /// </summary>
+        [JsonProperty("processing_metrics", NullValueHandling = NullValueHandling.Ignore)]
+        public ProcessingMetrics ProcessingMetrics { get; set; }
+        /// <summary>
+        /// If audio metrics are requested, information about the signal characteristics of the input audio.
+        /// </summary>
+        [JsonProperty("audio_metrics", NullValueHandling = NullValueHandling.Ignore)]
+        public AudioMetrics AudioMetrics { get; set; }
+        /// <summary>
         /// An array of warning messages associated with the request:
         /// * Warnings for invalid parameters or fields can include a descriptive message and a list of invalid argument
-        /// strings, for example, `\"Unknown arguments:\"` or `\"Unknown url query arguments:\"` followed by a list of
-        /// the form `\"{invalid_arg_1}, {invalid_arg_2}.\"`
+        /// strings, for example, `"Unknown arguments:"` or `"Unknown url query arguments:"` followed by a list of the
+        /// form `"{invalid_arg_1}, {invalid_arg_2}."`
         /// * The following warning is returned if the request passes a custom model that is based on an older version
-        /// of a base model for which an updated version is available: `\"Using previous version of base model, because
+        /// of a base model for which an updated version is available: `"Using previous version of base model, because
         /// your custom model has been built with it. Please note that this version will be supported only for a limited
         /// time. Consider updating your custom model to the new base model. If you do not do that you will be
-        /// automatically switched to base model when you used the non-updated custom model.\"`
+        /// automatically switched to base model when you used the non-updated custom model."`
         ///
         /// In both cases, the request succeeds despite the warnings.
         /// </summary>

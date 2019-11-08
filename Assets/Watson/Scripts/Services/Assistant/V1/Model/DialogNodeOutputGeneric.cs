@@ -28,6 +28,9 @@ namespace IBM.Watson.Assistant.V1.Model
         /// <summary>
         /// The type of response returned by the dialog node. The specified response type must be supported by the
         /// client application or channel.
+        ///
+        /// **Note:** The **search_skill** response type is available only for Plus and Premium users, and is used only
+        /// by the v2 runtime API.
         /// </summary>
         public class ResponseTypeValue
         {
@@ -51,6 +54,10 @@ namespace IBM.Watson.Assistant.V1.Model
             /// Constant CONNECT_TO_AGENT for connect_to_agent
             /// </summary>
             public const string CONNECT_TO_AGENT = "connect_to_agent";
+            /// <summary>
+            /// Constant SEARCH_SKILL for search_skill
+            /// </summary>
+            public const string SEARCH_SKILL = "search_skill";
             
         }
 
@@ -93,8 +100,27 @@ namespace IBM.Watson.Assistant.V1.Model
         }
 
         /// <summary>
+        /// The type of the search query. Required when **response_type**=`search_skill`.
+        /// </summary>
+        public class QueryTypeValue
+        {
+            /// <summary>
+            /// Constant NATURAL_LANGUAGE for natural_language
+            /// </summary>
+            public const string NATURAL_LANGUAGE = "natural_language";
+            /// <summary>
+            /// Constant DISCOVERY_QUERY_LANGUAGE for discovery_query_language
+            /// </summary>
+            public const string DISCOVERY_QUERY_LANGUAGE = "discovery_query_language";
+            
+        }
+
+        /// <summary>
         /// The type of response returned by the dialog node. The specified response type must be supported by the
         /// client application or channel.
+        ///
+        /// **Note:** The **search_skill** response type is available only for Plus and Premium users, and is used only
+        /// by the v2 runtime API.
         /// Constants for possible values can be found using DialogNodeOutputGeneric.ResponseTypeValue
         /// </summary>
         [JsonProperty("response_type", NullValueHandling = NullValueHandling.Ignore)]
@@ -114,6 +140,12 @@ namespace IBM.Watson.Assistant.V1.Model
         [JsonProperty("preference", NullValueHandling = NullValueHandling.Ignore)]
         public string Preference { get; set; }
         /// <summary>
+        /// The type of the search query. Required when **response_type**=`search_skill`.
+        /// Constants for possible values can be found using DialogNodeOutputGeneric.QueryTypeValue
+        /// </summary>
+        [JsonProperty("query_type", NullValueHandling = NullValueHandling.Ignore)]
+        public string QueryType { get; set; }
+        /// <summary>
         /// A list of one or more objects defining text responses. Required when **response_type**=`text`.
         /// </summary>
         [JsonProperty("values", NullValueHandling = NullValueHandling.Ignore)]
@@ -130,7 +162,7 @@ namespace IBM.Watson.Assistant.V1.Model
         [JsonProperty("time", NullValueHandling = NullValueHandling.Ignore)]
         public long? Time { get; set; }
         /// <summary>
-        /// Whether to send a \"user is typing\" event during the pause. Ignored if the channel does not support this
+        /// Whether to send a "user is typing" event during the pause. Ignored if the channel does not support this
         /// event. Valid only when **response_type**=`pause`.
         /// </summary>
         [JsonProperty("typing", NullValueHandling = NullValueHandling.Ignore)]
@@ -141,14 +173,12 @@ namespace IBM.Watson.Assistant.V1.Model
         [JsonProperty("source", NullValueHandling = NullValueHandling.Ignore)]
         public string Source { get; set; }
         /// <summary>
-        /// An optional title to show before the response. Valid only when **response_type**=`image` or `option`. This
-        /// string must be no longer than 512 characters.
+        /// An optional title to show before the response. Valid only when **response_type**=`image` or `option`.
         /// </summary>
         [JsonProperty("title", NullValueHandling = NullValueHandling.Ignore)]
         public string Title { get; set; }
         /// <summary>
         /// An optional description to show with the response. Valid only when **response_type**=`image` or `option`.
-        /// This string must be no longer than 256 characters.
         /// </summary>
         [JsonProperty("description", NullValueHandling = NullValueHandling.Ignore)]
         public string Description { get; set; }
@@ -160,9 +190,30 @@ namespace IBM.Watson.Assistant.V1.Model
         public List<DialogNodeOutputOptionsElement> Options { get; set; }
         /// <summary>
         /// An optional message to be sent to the human agent who will be taking over the conversation. Valid only when
-        /// **reponse_type**=`connect_to_agent`. This string must be no longer than 256 characters.
+        /// **reponse_type**=`connect_to_agent`.
         /// </summary>
         [JsonProperty("message_to_human_agent", NullValueHandling = NullValueHandling.Ignore)]
         public string MessageToHumanAgent { get; set; }
+        /// <summary>
+        /// The text of the search query. This can be either a natural-language query or a query that uses the Discovery
+        /// query language syntax, depending on the value of the **query_type** property. For more information, see the
+        /// [Discovery service
+        /// documentation](https://cloud.ibm.com/docs/services/discovery/query-operators.html#query-operators). Required
+        /// when **response_type**=`search_skill`.
+        /// </summary>
+        [JsonProperty("query", NullValueHandling = NullValueHandling.Ignore)]
+        public string Query { get; set; }
+        /// <summary>
+        /// An optional filter that narrows the set of documents to be searched. For more information, see the
+        /// [Discovery service documentation]([Discovery service
+        /// documentation](https://cloud.ibm.com/docs/services/discovery/query-parameters.html#filter).
+        /// </summary>
+        [JsonProperty("filter", NullValueHandling = NullValueHandling.Ignore)]
+        public string Filter { get; set; }
+        /// <summary>
+        /// The version of the Discovery service API to use for the query.
+        /// </summary>
+        [JsonProperty("discovery_version", NullValueHandling = NullValueHandling.Ignore)]
+        public string DiscoveryVersion { get; set; }
     }
 }

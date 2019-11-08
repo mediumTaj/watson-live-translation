@@ -88,7 +88,7 @@ namespace IBM.Watson.Discovery.V1.Model
         [JsonProperty("language", NullValueHandling = NullValueHandling.Ignore)]
         public string Language { get; set; }
         /// <summary>
-        /// Gets or Sets DocumentCounts
+        /// Object containing collection document count information.
         /// </summary>
         [JsonProperty("document_counts", NullValueHandling = NullValueHandling.Ignore)]
         public DocumentCounts DocumentCounts { get; set; }
@@ -98,14 +98,19 @@ namespace IBM.Watson.Discovery.V1.Model
         [JsonProperty("disk_usage", NullValueHandling = NullValueHandling.Ignore)]
         public CollectionDiskUsage DiskUsage { get; set; }
         /// <summary>
-        /// Gets or Sets TrainingStatus
+        /// Training status details.
         /// </summary>
         [JsonProperty("training_status", NullValueHandling = NullValueHandling.Ignore)]
         public TrainingStatus TrainingStatus { get; set; }
         /// <summary>
-        /// Object containing source crawl status information.
+        /// Object containing information about the crawl status of this collection.
         /// </summary>
-        [JsonProperty("source_crawl", NullValueHandling = NullValueHandling.Ignore)]
-        public SourceStatus SourceCrawl { get; set; }
+        [JsonProperty("crawl_status", NullValueHandling = NullValueHandling.Ignore)]
+        public CollectionCrawlStatus CrawlStatus { get; set; }
+        /// <summary>
+        /// Object containing smart document understanding information for this collection.
+        /// </summary>
+        [JsonProperty("smart_document_understanding", NullValueHandling = NullValueHandling.Ignore)]
+        public SduStatus SmartDocumentUnderstanding { get; set; }
     }
 }

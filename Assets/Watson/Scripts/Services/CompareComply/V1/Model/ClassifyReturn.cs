@@ -47,6 +47,42 @@ namespace IBM.Watson.CompareComply.V1.Model
         [JsonProperty("elements", NullValueHandling = NullValueHandling.Ignore)]
         public List<Element> Elements { get; set; }
         /// <summary>
+        /// The date or dates on which the document becomes effective.
+        /// </summary>
+        [JsonProperty("effective_dates", NullValueHandling = NullValueHandling.Ignore)]
+        public List<EffectiveDates> EffectiveDates { get; set; }
+        /// <summary>
+        /// The monetary amounts that identify the total amount of the contract that needs to be paid from one party to
+        /// another.
+        /// </summary>
+        [JsonProperty("contract_amounts", NullValueHandling = NullValueHandling.Ignore)]
+        public List<ContractAmts> ContractAmounts { get; set; }
+        /// <summary>
+        /// The dates on which the document is to be terminated.
+        /// </summary>
+        [JsonProperty("termination_dates", NullValueHandling = NullValueHandling.Ignore)]
+        public List<TerminationDates> TerminationDates { get; set; }
+        /// <summary>
+        /// The contract type as declared in the document.
+        /// </summary>
+        [JsonProperty("contract_types", NullValueHandling = NullValueHandling.Ignore)]
+        public List<ContractTypes> ContractTypes { get; set; }
+        /// <summary>
+        /// The durations of the contract.
+        /// </summary>
+        [JsonProperty("contract_terms", NullValueHandling = NullValueHandling.Ignore)]
+        public List<ContractTerms> ContractTerms { get; set; }
+        /// <summary>
+        /// The document's payment durations.
+        /// </summary>
+        [JsonProperty("payment_terms", NullValueHandling = NullValueHandling.Ignore)]
+        public List<PaymentTerms> PaymentTerms { get; set; }
+        /// <summary>
+        /// The contract currencies as declared in the document.
+        /// </summary>
+        [JsonProperty("contract_currencies", NullValueHandling = NullValueHandling.Ignore)]
+        public List<ContractCurrencies> ContractCurrencies { get; set; }
+        /// <summary>
         /// Definition of tables identified in the input document.
         /// </summary>
         [JsonProperty("tables", NullValueHandling = NullValueHandling.Ignore)]
@@ -61,26 +97,5 @@ namespace IBM.Watson.CompareComply.V1.Model
         /// </summary>
         [JsonProperty("parties", NullValueHandling = NullValueHandling.Ignore)]
         public List<Parties> Parties { get; set; }
-        /// <summary>
-        /// The date or dates on which the document becomes effective.
-        /// </summary>
-        [JsonProperty("effective_dates", NullValueHandling = NullValueHandling.Ignore)]
-        public List<EffectiveDates> EffectiveDates { get; set; }
-        /// <summary>
-        /// The monetary amounts that identify the total amount of the contract that needs to be paid from one party to
-        /// another.
-        /// </summary>
-        [JsonProperty("contract_amounts", NullValueHandling = NullValueHandling.Ignore)]
-        public List<ContractAmts> ContractAmounts { get; set; }
-        /// <summary>
-        /// The date or dates on which the document is to be terminated.
-        /// </summary>
-        [JsonProperty("termination_dates", NullValueHandling = NullValueHandling.Ignore)]
-        public List<TerminationDates> TerminationDates { get; set; }
-        /// <summary>
-        /// The document's contract type or types as declared in the document.
-        /// </summary>
-        [JsonProperty("contract_type", NullValueHandling = NullValueHandling.Ignore)]
-        public List<ContractType> ContractType { get; set; }
     }
 }

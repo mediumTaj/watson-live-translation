@@ -20,7 +20,8 @@ using Newtonsoft.Json;
 namespace IBM.Watson.Discovery.V1.Model
 {
     /// <summary>
-    /// Enrichment.
+    /// Enrichment step to perform on the document. Each enrichment is performed on the specified field in the order
+    /// that they are listed in the configuration.
     /// </summary>
     public class Enrichment
     {
@@ -61,7 +62,7 @@ namespace IBM.Watson.Discovery.V1.Model
         /// documentation](https://cloud.ibm.com/docs/services/discovery?topic=discovery-element-classification#element-classification).
         /// </summary>
         [JsonProperty("enrichment", NullValueHandling = NullValueHandling.Ignore)]
-        public string EnrichmentName { get; set; }
+        public string _Enrichment { get; set; }
         /// <summary>
         /// If true, then most errors generated during the enrichment process will be treated as warnings and will not
         /// cause the document to fail processing.
@@ -69,7 +70,7 @@ namespace IBM.Watson.Discovery.V1.Model
         [JsonProperty("ignore_downstream_errors", NullValueHandling = NullValueHandling.Ignore)]
         public bool? IgnoreDownstreamErrors { get; set; }
         /// <summary>
-        /// An object representing the configuration options to use for the `elements` enrichment.
+        /// Options which are specific to a particular enrichment.
         /// </summary>
         [JsonProperty("options", NullValueHandling = NullValueHandling.Ignore)]
         public EnrichmentOptions Options { get; set; }

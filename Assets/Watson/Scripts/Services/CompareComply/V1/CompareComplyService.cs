@@ -18,6 +18,7 @@
 using System.Collections.Generic;
 using System.Text;
 using IBM.Cloud.SDK;
+using IBM.Cloud.SDK.Authentication;
 using IBM.Cloud.SDK.Connection;
 using IBM.Cloud.SDK.Utilities;
 using IBM.Watson.CompareComply.V1.Model;
@@ -31,36 +32,7 @@ namespace IBM.Watson.CompareComply.V1
     public partial class CompareComplyService : BaseService
     {
         private const string serviceId = "compare_comply";
-        private const string defaultUrl = "https://gateway.watsonplatform.net/compare-comply/api";
-
-        #region Credentials
-        /// <summary>
-        /// Gets and sets the credentials of the service. Replace the default endpoint if endpoint is defined.
-        /// </summary>
-        public Credentials Credentials
-        {
-            get { return credentials; }
-            set
-            {
-                credentials = value;
-                if (!string.IsNullOrEmpty(credentials.Url))
-                {
-                    Url = credentials.Url;
-                }
-            }
-        }
-        #endregion
-
-        #region Url
-        /// <summary>
-        /// Gets and sets the endpoint URL for the service.
-        /// </summary>
-        public string Url
-        {
-            get { return url; }
-            set { url = value; }
-        }
-        #endregion
+        private const string defaultServiceUrl = "https://gateway.watsonplatform.net/compare-comply/api";
 
         #region VersionDate
         private string versionDate;
@@ -90,18 +62,16 @@ namespace IBM.Watson.CompareComply.V1
         /// CompareComplyService constructor.
         /// </summary>
         /// <param name="versionDate">The service version date in `yyyy-mm-dd` format.</param>
-        public CompareComplyService(string versionDate) : base(versionDate, serviceId)
-        {
-            VersionDate = versionDate;
-        }
+        public CompareComplyService(string versionDate) : this(versionDate, ConfigBasedAuthenticatorFactory.GetAuthenticator(serviceId)) {}
 
         /// <summary>
         /// CompareComplyService constructor.
         /// </summary>
         /// <param name="versionDate">The service version date in `yyyy-mm-dd` format.</param>
-        /// <param name="credentials">The service credentials.</param>
-        public CompareComplyService(string versionDate, Credentials credentials) : base(versionDate, credentials, serviceId)
+        /// <param name="authenticator">The service authenticator.</param>
+        public CompareComplyService(string versionDate, Authenticator authenticator) : base(versionDate, authenticator, serviceId)
         {
+            Authenticator = authenticator;
             if (string.IsNullOrEmpty(versionDate))
             {
                 throw new ArgumentNullException("A versionDate (format `yyyy-mm-dd`) is required to create an instance of CompareComplyService");
@@ -111,18 +81,10 @@ namespace IBM.Watson.CompareComply.V1
                 VersionDate = versionDate;
             }
 
-            if (credentials.HasCredentials() || credentials.HasIamTokenData())
-            {
-                Credentials = credentials;
 
-                if (string.IsNullOrEmpty(credentials.Url))
-                {
-                    credentials.Url = defaultUrl;
-                }
-            }
-            else
+            if (string.IsNullOrEmpty(GetServiceUrl()))
             {
-                throw new IBMException("Please provide a username and password or authorization token to use the CompareComply service. For more information, see https://github.com/watson-developer-cloud/unity-sdk/#configuring-your-service-credentials");
+                SetServiceUrl(defaultServiceUrl);
             }
         }
 
@@ -133,21 +95,18 @@ namespace IBM.Watson.CompareComply.V1
         /// </summary>
         /// <param name="callback">The callback function that is invoked when the operation completes.</param>
         /// <param name="file">The document to convert.</param>
-        /// <param name="filename">The filename for file.</param>
         /// <param name="fileContentType">The content type of file. (optional)</param>
         /// <param name="model">The analysis model to be used by the service. For the **Element classification** and
         /// **Compare two documents** methods, the default is `contracts`. For the **Extract tables** method, the
         /// default is `tables`. These defaults apply to the standalone methods as well as to the methods' use in
         /// batch-processing requests. (optional)</param>
         /// <returns><see cref="HTMLReturn" />HTMLReturn</returns>
-        public bool ConvertToHtml(Callback<HTMLReturn> callback, System.IO.MemoryStream file, string filename, string fileContentType = null, string model = null)
+        public bool ConvertToHtml(Callback<HTMLReturn> callback, System.IO.MemoryStream file, string fileContentType = null, string model = null)
         {
             if (callback == null)
                 throw new ArgumentNullException("`callback` is required for `ConvertToHtml`");
             if (file == null)
                 throw new ArgumentNullException("`file` is required for `ConvertToHtml`");
-            if (string.IsNullOrEmpty(filename))
-                throw new ArgumentNullException("`filename` is required for `ConvertToHtml`");
 
             RequestObject<HTMLReturn> req = new RequestObject<HTMLReturn>
             {
@@ -172,7 +131,7 @@ namespace IBM.Watson.CompareComply.V1
             req.Forms = new Dictionary<string, RESTConnector.Form>();
             if (file != null)
             {
-                req.Forms["file"] = new RESTConnector.Form(file, filename, fileContentType);
+                req.Forms["file"] = new RESTConnector.Form(file, "filename", fileContentType);
             }
             if (!string.IsNullOrEmpty(model))
             {
@@ -181,7 +140,7 @@ namespace IBM.Watson.CompareComply.V1
 
             req.OnResponse = OnConvertToHtmlResponse;
 
-            RESTConnector connector = RESTConnector.GetConnector(Credentials, "/v1/html_conversion");
+            RESTConnector connector = RESTConnector.GetConnector(Authenticator, "/v1/html_conversion", GetServiceUrl());
             if (connector == null)
             {
                 return false;
@@ -266,7 +225,7 @@ namespace IBM.Watson.CompareComply.V1
 
             req.OnResponse = OnClassifyElementsResponse;
 
-            RESTConnector connector = RESTConnector.GetConnector(Credentials, "/v1/element_classification");
+            RESTConnector connector = RESTConnector.GetConnector(Authenticator, "/v1/element_classification", GetServiceUrl());
             if (connector == null)
             {
                 return false;
@@ -351,7 +310,7 @@ namespace IBM.Watson.CompareComply.V1
 
             req.OnResponse = OnExtractTablesResponse;
 
-            RESTConnector connector = RESTConnector.GetConnector(Credentials, "/v1/tables");
+            RESTConnector connector = RESTConnector.GetConnector(Authenticator, "/v1/tables", GetServiceUrl());
             if (connector == null)
             {
                 return false;
@@ -454,7 +413,7 @@ namespace IBM.Watson.CompareComply.V1
 
             req.OnResponse = OnCompareDocumentsResponse;
 
-            RESTConnector connector = RESTConnector.GetConnector(Credentials, "/v1/comparison");
+            RESTConnector connector = RESTConnector.GetConnector(Authenticator, "/v1/comparison", GetServiceUrl());
             if (connector == null)
             {
                 return false;
@@ -541,7 +500,7 @@ namespace IBM.Watson.CompareComply.V1
 
             req.OnResponse = OnAddFeedbackResponse;
 
-            RESTConnector connector = RESTConnector.GetConnector(Credentials, "/v1/feedback");
+            RESTConnector connector = RESTConnector.GetConnector(Authenticator, "/v1/feedback", GetServiceUrl());
             if (connector == null)
             {
                 return false;
@@ -575,164 +534,6 @@ namespace IBM.Watson.CompareComply.V1
                 ((RequestObject<FeedbackReturn>)req).Callback(response, resp.Error);
         }
         /// <summary>
-        /// Delete a specified feedback entry.
-        ///
-        /// Deletes a feedback entry with a specified `feedback_id`.
-        /// </summary>
-        /// <param name="callback">The callback function that is invoked when the operation completes.</param>
-        /// <param name="feedbackId">A string that specifies the feedback entry to be deleted from the document.</param>
-        /// <param name="model">The analysis model to be used by the service. For the **Element classification** and
-        /// **Compare two documents** methods, the default is `contracts`. For the **Extract tables** method, the
-        /// default is `tables`. These defaults apply to the standalone methods as well as to the methods' use in
-        /// batch-processing requests. (optional)</param>
-        /// <returns><see cref="FeedbackDeleted" />FeedbackDeleted</returns>
-        public bool DeleteFeedback(Callback<FeedbackDeleted> callback, string feedbackId, string model = null)
-        {
-            if (callback == null)
-                throw new ArgumentNullException("`callback` is required for `DeleteFeedback`");
-            if (string.IsNullOrEmpty(feedbackId))
-                throw new ArgumentNullException("`feedbackId` is required for `DeleteFeedback`");
-
-            RequestObject<FeedbackDeleted> req = new RequestObject<FeedbackDeleted>
-            {
-                Callback = callback,
-                HttpMethod = UnityWebRequest.kHttpVerbDELETE,
-                DisableSslVerification = DisableSslVerification
-            };
-
-            foreach (KeyValuePair<string, string> kvp in customRequestHeaders)
-            {
-                req.Headers.Add(kvp.Key, kvp.Value);
-            }
-
-            ClearCustomRequestHeaders();
-
-            foreach (KeyValuePair<string, string> kvp in Common.GetSdkHeaders("compare-comply", "V1", "DeleteFeedback"))
-            {
-                req.Headers.Add(kvp.Key, kvp.Value);
-            }
-
-            req.Parameters["version"] = VersionDate;
-            if (!string.IsNullOrEmpty(model))
-            {
-                req.Parameters["model"] = model;
-            }
-
-            req.OnResponse = OnDeleteFeedbackResponse;
-
-            RESTConnector connector = RESTConnector.GetConnector(Credentials, string.Format("/v1/feedback/{0}", feedbackId));
-            if (connector == null)
-            {
-                return false;
-            }
-
-            return connector.Send(req);
-        }
-
-        private void OnDeleteFeedbackResponse(RESTConnector.Request req, RESTConnector.Response resp)
-        {
-            DetailedResponse<FeedbackDeleted> response = new DetailedResponse<FeedbackDeleted>();
-            foreach (KeyValuePair<string, string> kvp in resp.Headers)
-            {
-                response.Headers.Add(kvp.Key, kvp.Value);
-            }
-            response.StatusCode = resp.HttpResponseCode;
-
-            try
-            {
-                string json = Encoding.UTF8.GetString(resp.Data);
-                response.Result = JsonConvert.DeserializeObject<FeedbackDeleted>(json);
-                response.Response = json;
-            }
-            catch (Exception e)
-            {
-                Log.Error("CompareComplyService.OnDeleteFeedbackResponse()", "Exception: {0}", e.ToString());
-                resp.Success = false;
-            }
-
-            if (((RequestObject<FeedbackDeleted>)req).Callback != null)
-                ((RequestObject<FeedbackDeleted>)req).Callback(response, resp.Error);
-        }
-        /// <summary>
-        /// List a specified feedback entry.
-        ///
-        /// Lists a feedback entry with a specified `feedback_id`.
-        /// </summary>
-        /// <param name="callback">The callback function that is invoked when the operation completes.</param>
-        /// <param name="feedbackId">A string that specifies the feedback entry to be included in the output.</param>
-        /// <param name="model">The analysis model to be used by the service. For the **Element classification** and
-        /// **Compare two documents** methods, the default is `contracts`. For the **Extract tables** method, the
-        /// default is `tables`. These defaults apply to the standalone methods as well as to the methods' use in
-        /// batch-processing requests. (optional)</param>
-        /// <returns><see cref="GetFeedback" />GetFeedback</returns>
-        public bool GetFeedback(Callback<GetFeedback> callback, string feedbackId, string model = null)
-        {
-            if (callback == null)
-                throw new ArgumentNullException("`callback` is required for `GetFeedback`");
-            if (string.IsNullOrEmpty(feedbackId))
-                throw new ArgumentNullException("`feedbackId` is required for `GetFeedback`");
-
-            RequestObject<GetFeedback> req = new RequestObject<GetFeedback>
-            {
-                Callback = callback,
-                HttpMethod = UnityWebRequest.kHttpVerbGET,
-                DisableSslVerification = DisableSslVerification
-            };
-
-            foreach (KeyValuePair<string, string> kvp in customRequestHeaders)
-            {
-                req.Headers.Add(kvp.Key, kvp.Value);
-            }
-
-            ClearCustomRequestHeaders();
-
-            foreach (KeyValuePair<string, string> kvp in Common.GetSdkHeaders("compare-comply", "V1", "GetFeedback"))
-            {
-                req.Headers.Add(kvp.Key, kvp.Value);
-            }
-
-            req.Parameters["version"] = VersionDate;
-            if (!string.IsNullOrEmpty(model))
-            {
-                req.Parameters["model"] = model;
-            }
-
-            req.OnResponse = OnGetFeedbackResponse;
-
-            RESTConnector connector = RESTConnector.GetConnector(Credentials, string.Format("/v1/feedback/{0}", feedbackId));
-            if (connector == null)
-            {
-                return false;
-            }
-
-            return connector.Send(req);
-        }
-
-        private void OnGetFeedbackResponse(RESTConnector.Request req, RESTConnector.Response resp)
-        {
-            DetailedResponse<GetFeedback> response = new DetailedResponse<GetFeedback>();
-            foreach (KeyValuePair<string, string> kvp in resp.Headers)
-            {
-                response.Headers.Add(kvp.Key, kvp.Value);
-            }
-            response.StatusCode = resp.HttpResponseCode;
-
-            try
-            {
-                string json = Encoding.UTF8.GetString(resp.Data);
-                response.Result = JsonConvert.DeserializeObject<GetFeedback>(json);
-                response.Response = json;
-            }
-            catch (Exception e)
-            {
-                Log.Error("CompareComplyService.OnGetFeedbackResponse()", "Exception: {0}", e.ToString());
-                resp.Success = false;
-            }
-
-            if (((RequestObject<GetFeedback>)req).Callback != null)
-                ((RequestObject<GetFeedback>)req).Callback(response, resp.Error);
-        }
-        /// <summary>
         /// List the feedback in a document.
         ///
         /// Lists the feedback in a document.
@@ -750,9 +551,9 @@ namespace IBM.Watson.CompareComply.V1
         /// `model_id`. The only permitted value is `contracts`. (optional)</param>
         /// <param name="modelVersion">An optional string that filters the output to include only feedback with the
         /// specified `model_version`. (optional)</param>
-        /// <param name="categoryRemoved">An optional string in the form of a comma-separated list of categories. If
-        /// this is specified, the service filters the output to include only feedback that has at least one category
-        /// from the list removed. (optional)</param>
+        /// <param name="categoryRemoved">An optional string in the form of a comma-separated list of categories. If it
+        /// is specified, the service filters the output to include only feedback that has at least one category from
+        /// the list removed. (optional)</param>
         /// <param name="categoryAdded">An optional string in the form of a comma-separated list of categories. If this
         /// is specified, the service filters the output to include only feedback that has at least one category from
         /// the list added. (optional)</param>
@@ -871,7 +672,7 @@ namespace IBM.Watson.CompareComply.V1
 
             req.OnResponse = OnListFeedbackResponse;
 
-            RESTConnector connector = RESTConnector.GetConnector(Credentials, "/v1/feedback");
+            RESTConnector connector = RESTConnector.GetConnector(Authenticator, "/v1/feedback", GetServiceUrl());
             if (connector == null)
             {
                 return false;
@@ -905,13 +706,172 @@ namespace IBM.Watson.CompareComply.V1
                 ((RequestObject<FeedbackList>)req).Callback(response, resp.Error);
         }
         /// <summary>
+        /// Get a specified feedback entry.
+        ///
+        /// Gets a feedback entry with a specified `feedback_id`.
+        /// </summary>
+        /// <param name="callback">The callback function that is invoked when the operation completes.</param>
+        /// <param name="feedbackId">A string that specifies the feedback entry to be included in the output.</param>
+        /// <param name="model">The analysis model to be used by the service. For the **Element classification** and
+        /// **Compare two documents** methods, the default is `contracts`. For the **Extract tables** method, the
+        /// default is `tables`. These defaults apply to the standalone methods as well as to the methods' use in
+        /// batch-processing requests. (optional)</param>
+        /// <returns><see cref="GetFeedback" />GetFeedback</returns>
+        public bool GetFeedback(Callback<GetFeedback> callback, string feedbackId, string model = null)
+        {
+            if (callback == null)
+                throw new ArgumentNullException("`callback` is required for `GetFeedback`");
+            if (string.IsNullOrEmpty(feedbackId))
+                throw new ArgumentNullException("`feedbackId` is required for `GetFeedback`");
+
+            RequestObject<GetFeedback> req = new RequestObject<GetFeedback>
+            {
+                Callback = callback,
+                HttpMethod = UnityWebRequest.kHttpVerbGET,
+                DisableSslVerification = DisableSslVerification
+            };
+
+            foreach (KeyValuePair<string, string> kvp in customRequestHeaders)
+            {
+                req.Headers.Add(kvp.Key, kvp.Value);
+            }
+
+            ClearCustomRequestHeaders();
+
+            foreach (KeyValuePair<string, string> kvp in Common.GetSdkHeaders("compare-comply", "V1", "GetFeedback"))
+            {
+                req.Headers.Add(kvp.Key, kvp.Value);
+            }
+
+            req.Parameters["version"] = VersionDate;
+            if (!string.IsNullOrEmpty(model))
+            {
+                req.Parameters["model"] = model;
+            }
+
+            req.OnResponse = OnGetFeedbackResponse;
+
+            RESTConnector connector = RESTConnector.GetConnector(Authenticator, string.Format("/v1/feedback/{0}", feedbackId), GetServiceUrl());
+            if (connector == null)
+            {
+                return false;
+            }
+
+            return connector.Send(req);
+        }
+
+        private void OnGetFeedbackResponse(RESTConnector.Request req, RESTConnector.Response resp)
+        {
+            DetailedResponse<GetFeedback> response = new DetailedResponse<GetFeedback>();
+            foreach (KeyValuePair<string, string> kvp in resp.Headers)
+            {
+                response.Headers.Add(kvp.Key, kvp.Value);
+            }
+            response.StatusCode = resp.HttpResponseCode;
+
+            try
+            {
+                string json = Encoding.UTF8.GetString(resp.Data);
+                response.Result = JsonConvert.DeserializeObject<GetFeedback>(json);
+                response.Response = json;
+            }
+            catch (Exception e)
+            {
+                Log.Error("CompareComplyService.OnGetFeedbackResponse()", "Exception: {0}", e.ToString());
+                resp.Success = false;
+            }
+
+            if (((RequestObject<GetFeedback>)req).Callback != null)
+                ((RequestObject<GetFeedback>)req).Callback(response, resp.Error);
+        }
+        /// <summary>
+        /// Delete a specified feedback entry.
+        ///
+        /// Deletes a feedback entry with a specified `feedback_id`.
+        /// </summary>
+        /// <param name="callback">The callback function that is invoked when the operation completes.</param>
+        /// <param name="feedbackId">A string that specifies the feedback entry to be deleted from the document.</param>
+        /// <param name="model">The analysis model to be used by the service. For the **Element classification** and
+        /// **Compare two documents** methods, the default is `contracts`. For the **Extract tables** method, the
+        /// default is `tables`. These defaults apply to the standalone methods as well as to the methods' use in
+        /// batch-processing requests. (optional)</param>
+        /// <returns><see cref="FeedbackDeleted" />FeedbackDeleted</returns>
+        public bool DeleteFeedback(Callback<FeedbackDeleted> callback, string feedbackId, string model = null)
+        {
+            if (callback == null)
+                throw new ArgumentNullException("`callback` is required for `DeleteFeedback`");
+            if (string.IsNullOrEmpty(feedbackId))
+                throw new ArgumentNullException("`feedbackId` is required for `DeleteFeedback`");
+
+            RequestObject<FeedbackDeleted> req = new RequestObject<FeedbackDeleted>
+            {
+                Callback = callback,
+                HttpMethod = UnityWebRequest.kHttpVerbDELETE,
+                DisableSslVerification = DisableSslVerification
+            };
+
+            foreach (KeyValuePair<string, string> kvp in customRequestHeaders)
+            {
+                req.Headers.Add(kvp.Key, kvp.Value);
+            }
+
+            ClearCustomRequestHeaders();
+
+            foreach (KeyValuePair<string, string> kvp in Common.GetSdkHeaders("compare-comply", "V1", "DeleteFeedback"))
+            {
+                req.Headers.Add(kvp.Key, kvp.Value);
+            }
+
+            req.Parameters["version"] = VersionDate;
+            if (!string.IsNullOrEmpty(model))
+            {
+                req.Parameters["model"] = model;
+            }
+
+            req.OnResponse = OnDeleteFeedbackResponse;
+
+            RESTConnector connector = RESTConnector.GetConnector(Authenticator, string.Format("/v1/feedback/{0}", feedbackId), GetServiceUrl());
+            if (connector == null)
+            {
+                return false;
+            }
+
+            return connector.Send(req);
+        }
+
+        private void OnDeleteFeedbackResponse(RESTConnector.Request req, RESTConnector.Response resp)
+        {
+            DetailedResponse<FeedbackDeleted> response = new DetailedResponse<FeedbackDeleted>();
+            foreach (KeyValuePair<string, string> kvp in resp.Headers)
+            {
+                response.Headers.Add(kvp.Key, kvp.Value);
+            }
+            response.StatusCode = resp.HttpResponseCode;
+
+            try
+            {
+                string json = Encoding.UTF8.GetString(resp.Data);
+                response.Result = JsonConvert.DeserializeObject<FeedbackDeleted>(json);
+                response.Response = json;
+            }
+            catch (Exception e)
+            {
+                Log.Error("CompareComplyService.OnDeleteFeedbackResponse()", "Exception: {0}", e.ToString());
+                resp.Success = false;
+            }
+
+            if (((RequestObject<FeedbackDeleted>)req).Callback != null)
+                ((RequestObject<FeedbackDeleted>)req).Callback(response, resp.Error);
+        }
+        /// <summary>
         /// Submit a batch-processing request.
         ///
         /// Run Compare and Comply methods over a collection of input documents.
+        ///
         /// **Important:** Batch processing requires the use of the [IBM Cloud Object Storage
-        /// service](https://cloud.ibm.com/docs/services/cloud-object-storage/about-cos.html#about-ibm-cloud-object-storage).
+        /// service](https://cloud.ibm.com/docs/services/cloud-object-storage?topic=cloud-object-storage-about#about-ibm-cloud-object-storage).
         /// The use of IBM Cloud Object Storage with Compare and Comply is discussed at [Using batch
-        /// processing](https://cloud.ibm.com/docs/services/compare-comply/batching.html#before-you-batch).
+        /// processing](https://cloud.ibm.com/docs/services/compare-comply?topic=compare-comply-batching#before-you-batch).
         /// </summary>
         /// <param name="callback">The callback function that is invoked when the operation completes.</param>
         /// <param name="function">The Compare and Comply method to run across the submitted input documents.</param>
@@ -1009,7 +969,7 @@ namespace IBM.Watson.CompareComply.V1
 
             req.OnResponse = OnCreateBatchResponse;
 
-            RESTConnector connector = RESTConnector.GetConnector(Credentials, "/v1/batches");
+            RESTConnector connector = RESTConnector.GetConnector(Authenticator, "/v1/batches", GetServiceUrl());
             if (connector == null)
             {
                 return false;
@@ -1036,77 +996,6 @@ namespace IBM.Watson.CompareComply.V1
             catch (Exception e)
             {
                 Log.Error("CompareComplyService.OnCreateBatchResponse()", "Exception: {0}", e.ToString());
-                resp.Success = false;
-            }
-
-            if (((RequestObject<BatchStatus>)req).Callback != null)
-                ((RequestObject<BatchStatus>)req).Callback(response, resp.Error);
-        }
-        /// <summary>
-        /// Get information about a specific batch-processing job.
-        ///
-        /// Gets information about a batch-processing job with a specified ID.
-        /// </summary>
-        /// <param name="callback">The callback function that is invoked when the operation completes.</param>
-        /// <param name="batchId">The ID of the batch-processing job whose information you want to retrieve.</param>
-        /// <returns><see cref="BatchStatus" />BatchStatus</returns>
-        public bool GetBatch(Callback<BatchStatus> callback, string batchId)
-        {
-            if (callback == null)
-                throw new ArgumentNullException("`callback` is required for `GetBatch`");
-            if (string.IsNullOrEmpty(batchId))
-                throw new ArgumentNullException("`batchId` is required for `GetBatch`");
-
-            RequestObject<BatchStatus> req = new RequestObject<BatchStatus>
-            {
-                Callback = callback,
-                HttpMethod = UnityWebRequest.kHttpVerbGET,
-                DisableSslVerification = DisableSslVerification
-            };
-
-            foreach (KeyValuePair<string, string> kvp in customRequestHeaders)
-            {
-                req.Headers.Add(kvp.Key, kvp.Value);
-            }
-
-            ClearCustomRequestHeaders();
-
-            foreach (KeyValuePair<string, string> kvp in Common.GetSdkHeaders("compare-comply", "V1", "GetBatch"))
-            {
-                req.Headers.Add(kvp.Key, kvp.Value);
-            }
-
-            req.Parameters["version"] = VersionDate;
-
-            req.OnResponse = OnGetBatchResponse;
-
-            RESTConnector connector = RESTConnector.GetConnector(Credentials, string.Format("/v1/batches/{0}", batchId));
-            if (connector == null)
-            {
-                return false;
-            }
-
-            return connector.Send(req);
-        }
-
-        private void OnGetBatchResponse(RESTConnector.Request req, RESTConnector.Response resp)
-        {
-            DetailedResponse<BatchStatus> response = new DetailedResponse<BatchStatus>();
-            foreach (KeyValuePair<string, string> kvp in resp.Headers)
-            {
-                response.Headers.Add(kvp.Key, kvp.Value);
-            }
-            response.StatusCode = resp.HttpResponseCode;
-
-            try
-            {
-                string json = Encoding.UTF8.GetString(resp.Data);
-                response.Result = JsonConvert.DeserializeObject<BatchStatus>(json);
-                response.Response = json;
-            }
-            catch (Exception e)
-            {
-                Log.Error("CompareComplyService.OnGetBatchResponse()", "Exception: {0}", e.ToString());
                 resp.Success = false;
             }
 
@@ -1148,7 +1037,7 @@ namespace IBM.Watson.CompareComply.V1
 
             req.OnResponse = OnListBatchesResponse;
 
-            RESTConnector connector = RESTConnector.GetConnector(Credentials, "/v1/batches");
+            RESTConnector connector = RESTConnector.GetConnector(Authenticator, "/v1/batches", GetServiceUrl());
             if (connector == null)
             {
                 return false;
@@ -1180,6 +1069,77 @@ namespace IBM.Watson.CompareComply.V1
 
             if (((RequestObject<Batches>)req).Callback != null)
                 ((RequestObject<Batches>)req).Callback(response, resp.Error);
+        }
+        /// <summary>
+        /// Get information about a specific batch-processing job.
+        ///
+        /// Gets information about a batch-processing job with a specified ID.
+        /// </summary>
+        /// <param name="callback">The callback function that is invoked when the operation completes.</param>
+        /// <param name="batchId">The ID of the batch-processing job whose information you want to retrieve.</param>
+        /// <returns><see cref="BatchStatus" />BatchStatus</returns>
+        public bool GetBatch(Callback<BatchStatus> callback, string batchId)
+        {
+            if (callback == null)
+                throw new ArgumentNullException("`callback` is required for `GetBatch`");
+            if (string.IsNullOrEmpty(batchId))
+                throw new ArgumentNullException("`batchId` is required for `GetBatch`");
+
+            RequestObject<BatchStatus> req = new RequestObject<BatchStatus>
+            {
+                Callback = callback,
+                HttpMethod = UnityWebRequest.kHttpVerbGET,
+                DisableSslVerification = DisableSslVerification
+            };
+
+            foreach (KeyValuePair<string, string> kvp in customRequestHeaders)
+            {
+                req.Headers.Add(kvp.Key, kvp.Value);
+            }
+
+            ClearCustomRequestHeaders();
+
+            foreach (KeyValuePair<string, string> kvp in Common.GetSdkHeaders("compare-comply", "V1", "GetBatch"))
+            {
+                req.Headers.Add(kvp.Key, kvp.Value);
+            }
+
+            req.Parameters["version"] = VersionDate;
+
+            req.OnResponse = OnGetBatchResponse;
+
+            RESTConnector connector = RESTConnector.GetConnector(Authenticator, string.Format("/v1/batches/{0}", batchId), GetServiceUrl());
+            if (connector == null)
+            {
+                return false;
+            }
+
+            return connector.Send(req);
+        }
+
+        private void OnGetBatchResponse(RESTConnector.Request req, RESTConnector.Response resp)
+        {
+            DetailedResponse<BatchStatus> response = new DetailedResponse<BatchStatus>();
+            foreach (KeyValuePair<string, string> kvp in resp.Headers)
+            {
+                response.Headers.Add(kvp.Key, kvp.Value);
+            }
+            response.StatusCode = resp.HttpResponseCode;
+
+            try
+            {
+                string json = Encoding.UTF8.GetString(resp.Data);
+                response.Result = JsonConvert.DeserializeObject<BatchStatus>(json);
+                response.Response = json;
+            }
+            catch (Exception e)
+            {
+                Log.Error("CompareComplyService.OnGetBatchResponse()", "Exception: {0}", e.ToString());
+                resp.Success = false;
+            }
+
+            if (((RequestObject<BatchStatus>)req).Callback != null)
+                ((RequestObject<BatchStatus>)req).Callback(response, resp.Error);
         }
         /// <summary>
         /// Update a pending or active batch-processing job.
@@ -1235,7 +1195,7 @@ namespace IBM.Watson.CompareComply.V1
 
             req.OnResponse = OnUpdateBatchResponse;
 
-            RESTConnector connector = RESTConnector.GetConnector(Credentials, string.Format("/v1/batches/{0}", batchId));
+            RESTConnector connector = RESTConnector.GetConnector(Authenticator, string.Format("/v1/batches/{0}", batchId), GetServiceUrl());
             if (connector == null)
             {
                 return false;

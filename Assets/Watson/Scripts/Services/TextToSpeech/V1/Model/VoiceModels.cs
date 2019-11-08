@@ -21,14 +21,14 @@ using Newtonsoft.Json;
 namespace IBM.Watson.TextToSpeech.V1.Model
 {
     /// <summary>
-    /// VoiceModels.
+    /// Information about existing custom voice models.
     /// </summary>
     public class VoiceModels
     {
         /// <summary>
         /// An array of `VoiceModel` objects that provides information about each available custom voice model. The
-        /// array is empty if the requesting service credentials own no custom voice models (if no language is
-        /// specified) or own no custom voice models for the specified language.
+        /// array is empty if the requesting credentials own no custom voice models (if no language is specified) or own
+        /// no custom voice models for the specified language.
         /// </summary>
         [JsonProperty("customizations", NullValueHandling = NullValueHandling.Ignore)]
         public List<VoiceModel> Customizations { get; set; }

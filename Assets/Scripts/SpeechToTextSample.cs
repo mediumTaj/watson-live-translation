@@ -23,6 +23,8 @@ using IBM.Watson.SpeechToText.V1;
 using IBM.Cloud.SDK;
 using IBM.Cloud.SDK.Utilities;
 using IBM.Cloud.SDK.DataTypes;
+using IBM.Cloud.SDK.Authentication;
+using IBM.Cloud.SDK.Authentication.Iam;
 
 namespace LangaugeTranslatorDemo
 {
@@ -79,22 +81,17 @@ namespace LangaugeTranslatorDemo
                 throw new IBMException("Plesae provide IAM ApiKey for the service.");
             }
 
-            //  Create credential and instantiate service
-            Credentials credentials = null;
+            //  Create authenticator and instantiate service
+            Authenticator speechToTextAuthenticator = new IamAuthenticator(
+                apikey: iamApikey, 
+                url: serviceUrl
+                );
 
-            //  Authenticate using iamApikey
-            TokenOptions tokenOptions = new TokenOptions()
-            {
-                IamApiKey = iamApikey
-            };
-
-            credentials = new Credentials(tokenOptions, serviceUrl);
-
-            //  Wait for tokendata
-            while (!credentials.HasIamTokenData())
+            //  Wait for authenticator
+            while (!speechToTextAuthenticator.CanAuthenticate())
                 yield return null;
 
-            _service = new SpeechToTextService(credentials);
+            _service = new SpeechToTextService(speechToTextAuthenticator);
             _service.StreamMultipart = true;
 
             Active = true;

@@ -1,4 +1,6 @@
 ﻿using IBM.Cloud.SDK;
+using IBM.Cloud.SDK.Authentication;
+using IBM.Cloud.SDK.Authentication.Iam;
 using IBM.Cloud.SDK.Utilities;
 using IBM.Watson.LanguageTranslator.V3;
 using IBM.Watson.LanguageTranslator.V3.Model;
@@ -43,24 +45,21 @@ namespace LangaugeTranslatorDemo
 
         private IEnumerator CreateService()
         {
-            //  Create TokenOptions
-            TokenOptions languageTranslatorTokenOptions = new TokenOptions()
-            {
-                IamApiKey = iamApikey
-            };
-
-            //  Create Credentials object
-            Credentials languageTranslatorCredentials = new Credentials(
-                iamTokenOptions: languageTranslatorTokenOptions,
-                serviceUrl: serviceUrl
+            //  Create authenticator
+            Authenticator languageTranslatorAuthenticator = new IamAuthenticator(
+                apikey: iamApikey,
+                url: serviceUrl
                 );
 
             //  Yield here until we have IAM token data
-            while (!languageTranslatorCredentials.HasIamTokenData())
+            while (!languageTranslatorAuthenticator.CanAuthenticate())
                 yield return null;
 
             //  Instantiate service
-            languageTranslator = new LanguageTranslatorService("2019-04-09", languageTranslatorCredentials);
+            languageTranslator = new LanguageTranslatorService(
+                versionDate: "2019-04-09", 
+                authenticator: languageTranslatorAuthenticator
+                );
         }
 
         //  Call this method from ExampleStreaming
@@ -78,7 +77,7 @@ namespace LangaugeTranslatorDemo
         private void OnTranslate(DetailedResponse<TranslationResult> response, IBMError error)
         {
             //  Populate text field with TranslationOutput
-            ResultsField.text = response.Result.Translations[0].TranslationOutput;
+            ResultsField.text = response.Result.Translations[0]._Translation;
         }
     }
 }

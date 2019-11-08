@@ -91,6 +91,10 @@ namespace IBM.Watson.CompareComply.V1.Model
             /// </summary>
             public const string LIABILITY = "Liability";
             /// <summary>
+            /// Constant ORDER_OF_PRECEDENCE for Order of Precedence
+            /// </summary>
+            public const string ORDER_OF_PRECEDENCE = "Order of Precedence";
+            /// <summary>
             /// Constant PAYMENT_TERMS_BILLING for Payment Terms & Billing
             /// </summary>
             public const string PAYMENT_TERMS_BILLING = "Payment Terms & Billing";
@@ -136,7 +140,7 @@ namespace IBM.Watson.CompareComply.V1.Model
         [JsonProperty("label", NullValueHandling = NullValueHandling.Ignore)]
         public string Label { get; set; }
         /// <summary>
-        /// One or more hashed values that you can send to IBM to provide feedback or receive support.
+        /// Hashed values that you can send to IBM to provide feedback or receive support.
         /// </summary>
         [JsonProperty("provenance_ids", NullValueHandling = NullValueHandling.Ignore)]
         public List<string> ProvenanceIds { get; set; }

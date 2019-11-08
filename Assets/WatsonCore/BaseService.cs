@@ -16,6 +16,9 @@
 */
 
 using IBM.Cloud.SDK.Utilities;
+using IBM.Cloud.SDK.Connection;
+using IBM.Cloud.SDK.Authentication;
+using IBM.Cloud.SDK.Authentication.NoAuth;
 using System;
 using System.Collections.Generic;
 
@@ -23,64 +26,50 @@ namespace IBM.Cloud.SDK
 {
     public class BaseService
     {
-        protected Credentials credentials;
-        protected string url;
+        #region Authenticator
+        /// <summary>
+        /// Gets and sets the authenticator of the service.
+        public Authenticator Authenticator { get; set; }
+        #endregion
+        protected string serviceUrl;
+        public string ServiceId { get; set; }
         protected Dictionary<string, string> customRequestHeaders = new Dictionary<string, string>();
+        public static string PropNameServiceUrl = "URL";
+        public static string PropNameServiceDisableSslVerification = "DISABLE_SSL";
+        private const string ErrorMessageNoAuthenticator = "Authentication information was not properly configured.";
 
-        public BaseService(string serviceId)
-        {
-            var credentialsPaths = Utility.GetCredentialsPaths();
-            if (credentialsPaths.Count > 0)
+        public BaseService(string versionDate, Authenticator authenticator, string serviceId) : this(authenticator, serviceId) { }
+
+        public BaseService(Authenticator authenticator, string serviceId) {
+            ServiceId = serviceId;
+
+            Authenticator = authenticator ?? throw new ArgumentNullException(ErrorMessageNoAuthenticator);
+            // Try to retrieve the service URL from either a credential file, environment, or VCAP_SERVICES.
+            Dictionary<string, string> props = CredentialUtils.GetServiceProperties(serviceId);
+            props.TryGetValue(PropNameServiceUrl, out string url);
+            if (!string.IsNullOrEmpty(url))
             {
-                foreach (string path in credentialsPaths)
-                {
-                    if (Utility.LoadEnvFile(path))
-                    {
-                        break;
-                    }
-                }
-
-                string ApiKey = Environment.GetEnvironmentVariable(serviceId.ToUpper() + "_IAM_APIKEY");
-                // check for old IAM API key name as well
-                if (string.IsNullOrEmpty(ApiKey)) {
-                    ApiKey = Environment.GetEnvironmentVariable(serviceId.ToUpper() + "_APIKEY");
-                }
-                string Username = Environment.GetEnvironmentVariable(serviceId.ToUpper() + "_USERNAME");
-                string Password = Environment.GetEnvironmentVariable(serviceId.ToUpper() + "_PASSWORD");
-                string ServiceUrl = Environment.GetEnvironmentVariable(serviceId.ToUpper() + "_URL");
-
-                if (string.IsNullOrEmpty(ApiKey) && (string.IsNullOrEmpty(Username) || string.IsNullOrEmpty(Password)))
-                {
-                    throw new NullReferenceException(string.Format("Either {0}_APIKEY or {0}_USERNAME and {0}_PASSWORD did not exist. Please add credentials with this key in ibm-credentials.env.", serviceId.ToUpper()));
-                }
-
-                if (!string.IsNullOrEmpty(ApiKey))
-                {
-                    TokenOptions tokenOptions = new TokenOptions()
-                    {
-                        IamApiKey = ApiKey
-                    };
-
-                    credentials = new Credentials(tokenOptions, ServiceUrl);
-
-                    if (string.IsNullOrEmpty(credentials.Url))
-                    {
-                        credentials.Url = url;
-                    }
-                }
-
-                if (!string.IsNullOrEmpty(Username) && !string.IsNullOrEmpty(Password))
-                {
-                    credentials = new Credentials(Username, Password, url);
-                }
+                SetServiceUrl(url);
             }
         }
 
-        public BaseService(string versionDate, string serviceId) : this(serviceId) { }
+        public void SetServiceUrl(string url)
+        {
+            serviceUrl = url;
+        }
 
-        public BaseService(string versionDate, Credentials credentials, string serviceId) { }
+        public string GetServiceUrl()
+        {
+            return serviceUrl;
+        }
 
-        public BaseService(Credentials credentials, string serviceId) { }
+        /// <summary>
+        /// Returns the authenticator for the service.
+        /// </summary>
+        public Authenticator GetAuthenticator()
+        {
+            return Authenticator;
+        }
 
         public void WithHeader(string name, string value)
         {

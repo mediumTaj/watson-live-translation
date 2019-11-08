@@ -34,11 +34,15 @@ Ensure that you have the following prerequisites:
 * Change the build settings in Unity (**File > Build Settings**) to any platform except for web player/Web GL. The IBM Watson SDK for Unity does not support Unity Web Player.
 * If using Unity 2018.2 or later you'll need to set **Scripting Runtime Version** and **Api Compatibility Level** in Build Settings to **.NET 4.x equivalent**. We need to access security options to enable TLS 1.2. 
 
+> Updating MacOS to Mojave may disable microphone for Unity. If you are running into this issue please see these [guidelines](https://support.apple.com/en-us/HT209175) to configure microphone for Mojave. 
+
+
 ## Getting the Watson SDK and adding it to Unity
 You can get the latest SDK release by clicking [here][latest_release_sdk]. **You will also need to download the latest release of the IBM Unity SDK Core by clicking [here][latest_release_core].**
 
 ### Installing the SDK source into your Unity project
 Move the **`unity-sdk`** and **`unity-sdk-core`** directories into the **`Assets`** directory of your Unity project. _Optional: rename the SDK directory from `unity-sdk` to `Watson` and the Core directory from `unity-sdk-core` to `IBMSdkCore`_.
+
 
 ## Configuring your service credentials
 To create instances of Watson services and their credentials, follow the steps below.
@@ -47,12 +51,12 @@ To create instances of Watson services and their credentials, follow the steps b
 
 1. Determine which services to configure.
 1. If you have configured the services already, complete the following steps. Otherwise, go to step 3.
-    1. Log in to IBM Cloud at https://console.bluemix.net.
+    1. Log in to IBM Cloud at https://cloud.ibm.com.
     1. Click the service you would like to use.
     1. Click **Service credentials**.
     1. Click **View credentials** to access your credentials.
 1. If you need to configure the services that you want to use, complete the following steps.
-    1. Log in to IBM Cloud at https://console.bluemix.net.
+    1. Log in to IBM Cloud at https://cloud.ibm.com.
     1. Click the **Create service** button.
     1. Under **Watson**, select which service you would like to create an instance of and click that service.
     1. Give the service and credential a name. Select a plan and click the **Create** button on the bottom.
@@ -103,33 +107,23 @@ Some services use token-based Identity and Access Management (IAM) authenticatio
 You supply either an IAM service **API key** or an **access token**:
 
 - Use the API key to have the SDK manage the lifecycle of the access token. The SDK requests an access token, ensures that the access token is valid, and refreshes it if necessary.
-- Use the access token if you want to manage the lifecycle yourself. For details, see [Authenticating with IAM tokens](https://console.bluemix.net/docs/services/watson/getting-started-iam.html). If you want to switch to API key, in a coroutine, override your stored IAM credentials with an IAM API key and yield until the credentials object `HasIamTokenData()` returns `true`.
+- Use the access token if you want to manage the lifecycle yourself. For details, see [Authenticating with IAM tokens](https://cloud.ibm.com/docs/services/watson?topic=watson-iam). If you want to switch to API key, in a coroutine, override your stored IAM credentials with an IAM API key and yield until the credentials object `HasIamTokenData()` returns `true`.
 
 #### Supplying the IAM API key
 ```cs
-Credentials credentials;
+Authenticator authenticator;
 AssistantService assistant;
 string versionDate = "<service-version-date>";
 
 IEnumerator TokenExample()
 {
-    //  Create IAM token options and supply the apikey. IamUrl is the URL used to get the 
-    //  authorization token using the IamApiKey. It defaults to https://iam.bluemix.net/identity/token
-    TokenOptions iamTokenOptions = new TokenOptions()
-    {
-        IamApiKey = "<iam-api-key>",
-        IamUrl = "<iam-url>"
-    };
-
-    //  Create credentials using the IAM token options
-    credentials = new Credentials(iamTokenOptions, "<service-url>");
-    while (!credentials.HasIamTokenData())
+    //  Create authenticator using the IAM token options
+    authenticator = new IamAuthenticator(apikey: "<iam-api-key>");
+    while (!authenticator.CanAuthenticate())
         yield return null;
 
-    assistant = new AssistantService(
-        versionDate: versionDate, 
-        credentials: credentials
-    );
+    assistant = new AssistantService(versionDate, authenticator);
+    assistant.SetServiceUrl("<service-url>");
     assistant.ListWorkspaces(callback: OnListWorkspaces);
 }
 
@@ -141,25 +135,17 @@ private void OnListWorkspaces(DetailedResponse<WorkspaceCollection> response, IB
 
 #### Supplying the access token
 ```cs
-Credentials credentials;
+Authenticator authenticator;
 AssistantService assistant;
 string versionDate = "<service-version-date>";
 
 void TokenExample()
 {
-    //  Create IAM token options and supply the access token.
-    TokenOptions iamTokenOptions = new TokenOptions()
-    {
-        IamAccessToken = "<iam-access-token>"
-    };
+    //  Create authenticator using the Bearer Token
+    authenticator = new BearerTokenAuthenticator("<bearer-token>");
 
-    //  Create credentials using the IAM token options
-    credentials = new Credentials(iamTokenOptions, "<service-url>");
-
-    assistant = new AssistantService(
-        versionDate: versionDate,
-        credentials: credentials
-    );
+    assistant = new AssistantService(versionDate, authenticator);
+    assistant.SetServiceUrl("<service-url>");
     assistant.ListWorkspaces(callback: OnListWorkspaces);
 }
 
@@ -171,23 +157,21 @@ private void OnListWorkspaces(DetailedResponse<WorkspaceCollection> response, IB
 
 ### Username and password
 ```cs
-Credentials credentials;
+Authenticator authenticator;
 AssistantService assistant;
 string versionDate = "<service-version-date>";
 
 void UsernamePasswordExample()
 {
-    Credentials credentials = new Credentials("<username>", "<password>", "<url>");
-    assistant = new AssistantService(
-        versionDate: versionDate,
-        credentials: credentials
-    );
+    Authenticator authenticator = new BasicAuthenticator("<username>", "<password>", "<url>");
+    assistant = new AssistantService(versionDate, authenticator);
+    assistant.SetServiceUrl("<service-url>");
 }
 ```
 
-### Supplying credentials
+### Supplying authenticator
 
-There are two ways to supply the credentials you found above to the SDK for authentication.
+There are two ways to supply the authenticator you found above to the SDK for authentication.
 
 #### Credential file (easier!)
 
@@ -206,16 +190,16 @@ public IEnumerator ExampleAutoService()
     Assistant assistantService = new Assistant("2019-04-03");
 
     //  Wait for authorization token
-    while (!assistantService.Credentials.HasIamTokenData())
+    while (!assistantService.Authenticator.CanAuthenticate())
         yield return null;
-        
+
     var listWorkspacesResult = assistantService.ListWorkspaces();
 }
 ```
 
 And that's it!
 
-If you're using more than one service at a time in your code and get two different `ibm-credentials.env` files, just put the contents together in one `ibm-credentials.env` file and the SDK will handle assigning credentials to their appropriate services.
+If you're using more than one service at a time in your code and get two different `ibm-credentials.env` files, just put the contents together in one `ibm-credentials.env` file and the SDK will handle assigning authenticator to their appropriate services.
 
 If you would like to configure the location/name of your credential file, you can set an environment variable called `IBM_CREDENTIALS_FILE`. **This will take precedence over the locations specified above.** Here's how you can do that:
 
@@ -227,35 +211,31 @@ where `<path>` is something like `/home/user/Downloads/<file_name>.env`.
 
 #### Manually
 
-If you'd prefer to set authentication values manually in your code, the SDK supports that as well. The way you'll do this depends on what type of credentials your service instance gives you.
+If you'd prefer to set authentication values manually in your code, the SDK supports that as well. The way you'll do this depends on what type of authenticator your service instance gives you.
 
 ## Callbacks
-A success callback is required. You can specify the return type in the callback.  
+A success callback is required. You can specify the return type in the callback.
 ```cs
 AssistantService assistant;
 string assistantVersionDate = "<assistant-version-date>";
-Credentials assistantCredentials;
+Authenticator assistantAuthenticator;
 string workspaceId = "<workspaceId>";
 
 DiscoveryService discovery;
 string discoveryVersionDate = "<discovery-version-date>";
-Credentials discoveryCredentials;
+Authenticator discoveryAuthenticator;
 
 private void Example()
 {
-    assistant = new AssistantService(
-        versionDate: assistantVersionDate,
-        credentials: assistantCredentials
-    );
+    assistant = new AssistantService(assistantVersionDate, assistantAuthenticator);
+    assistant.SetServiceUrl("<service-url>");
 
-    discovery = new DiscoveryService(
-        versionDate: discoveryVersionDate,
-        credentials: discoveryCredentials
-    );
+    discovery = new DiscoveryService(discoveryVersionDate, discoveryAuthenticator);
+    discovery.SetServiceUrl("<service-url>");
 
     //  Call with sepcific callbacks
     assistant.Message(
-        callback: OnMessage, 
+        callback: OnMessage,
         workspaceId: workspaceId
     );
 
@@ -279,28 +259,29 @@ Since the success callback signature is generic and the failure callback always 
 ```cs
 AssistantService assistant;
 string assistantVersionDate = "<assistant-version-date>";
-Credentials assistantCredentials;
+Authenticator assistantAuthenticator;
 string workspaceId = "<workspaceId>";
 
 DiscoveryService discovery;
 string discoveryVersionDate = "<discovery-version-date>";
-Credentials discoveryCredentials;
+Authenticator discoveryAuthenticator;
 
 private void Example()
 {
-    assistant = new AssistantService(
-        versionDate: assistantVersionDate,
-        credentials: assistantCredentials
-    );
+    assistant = new AssistantService(assistantVersionDate, assistantAuthenticator);
+    assistant.SetServiceUrl("<service-url>");
 
     //  Call with generic callbacks
     JObject input = new JObject();
     input.Add("text", "");
     assistant.Message(
-        callback: OnSuccess, 
+        callback: OnSuccess,
         workspaceId: workspaceId,
         input: input
     );
+
+    discovery = new DiscoveryService(discoveryVersionDate, discoveryAuthenticator);
+    discovery.SetServiceUrl("<service-url>");
 
     discovery.ListEnvironments(
         callback: OnSuccess
@@ -318,15 +299,12 @@ You can also use an anonymous callback
 ```cs
 AssistantService assistant;
 string assistantVersionDate = "<assistant-version-date>";
-Credentials assistantCredentials;
+Authenticator assistantAuthenticator;
 string workspaceId = "<workspaceId>";
 
 private void Example()
 {
-    assistant = new AssistantService(
-        versionDate: assistantVersionDate,
-        credentials: assistantCredentials
-    );
+    assistant = new AssistantService(assistantVersionDate, assistantAuthenticator);
 
     assistant.ListWorkspaces(
         callback: (DetailedResponse<WorkspaceCollection> response, IBMError error) =>
@@ -338,6 +316,7 @@ private void Example()
         sort: "-name",
         includeAudit: true
     );
+    assistant.SetServiceUrl("<service-url>");
 }
 ```
 
@@ -345,15 +324,12 @@ You can check the `error` response to see if there was an error in the call.
 ```cs
 AssistantService assistant;
 string assistantVersionDate = "<assistant-version-date>";
-Credentials assistantCredentials;
+Authenticator assistantAuthenticator;
 string workspaceId = "<workspaceId>";
 
 private void Example()
 {
-    assistant = new AssistantService(
-        versionDate: assistantVersionDate,
-        credentials: assistantCredentials
-    );
+    assistant = new AssistantService(versionDate, authenticator);
 
     assistant.Message(OnMessage, workspaceId);
 }
@@ -377,15 +353,12 @@ You can send custom request headers by adding them to the service.
 ```cs
 AssistantService assistant;
 string assistantVersionDate = "<assistant-version-date>";
-Credentials assistantCredentials;
+Authenticator assistantAuthenticator;
 string workspaceId = "<workspaceId>";
 
 void Example()
 {
-    assistant = new AssistantService(
-        versionDate: assistantVersionDate,
-        credentials: assistantCredentials
-    );
+    assistant = new AssistantService(assistantVersionDate, assistantAuthenticator);
 
     //  Add custom header to the REST call
     assistant.WithHeader("X-Watson-Metadata", "customer_id=some-assistant-customer-id");
@@ -404,15 +377,12 @@ You can get response headers in the `headers` object in the DetailedResponse.
 ```cs
 AssistantService assistant;
 string assistantVersionDate = "<assistant-version-date>";
-Credentials assistantCredentials;
+Authenticator assistantAuthenticator;
 string workspaceId = "<workspaceId>";
 
 void Example()
 {
-    assistant = new AssistantService(
-        versionDate: assistantVersionDate,
-        credentials: assistantCredentials
-    );
+    assistant = new AssistantService(assistantVersionDate, assistantAuthenticator);
 
     assistant.Message(OnMessage, "<workspace-id>");
 }
@@ -427,28 +397,52 @@ private void OnMessage(DetailedResponse<MessageResponse> response, IBMError erro
 }
 ```
 
-## Streaming outside of US South region
-Watson services have upgraded their hosts to TLS 1.2. The US South region has a TLS 1.0 endpoint that will work for streaming but if you are streaming in other regions you will need to use Unity 2018.2 and set Scripting Runtime Version in Build Settings to .NET 4.x equivalent. In lower versions of Unity you will need to create the Speech to Text instance in US South.
+## TLS 1.0 support
+Watson services have upgraded their hosts to TLS 1.2. The Dallas location has a TLS 1.0 endpoint that works for streaming. To stream in other regions, use Unity 2018.2 and set **Scripting Runtime Version** in Build Settings to `.NET 4.x equivalent`. To support Speech to Text in earlier versions of Unity, create the instance in the Dallas location.
 
 ## Disabling SSL verification
 You can disable SSL verifciation when making a service call.
 ```cs
 AssistantService assistant;
 string assistantVersionDate = "<assistant-version-date>";
-Credentials assistantCredentials;
+Authenticator assistantAuthenticator;
 string workspaceId = "<workspaceId>";
 
 void Example()
 {
-    credentials.DisableSslVerification = true;
-    assistant = new AssistantService(
-        versionDate: assistantVersionDate,
-        credentials: assistantCredentials
-    );
+    authenticator.DisableSslVerification = true;
+    assistant = new AssistantService(assistantVersionDate, assistantAuthenticator);
 
     //  disable ssl verification
     assistant.DisableSslVerification = true;
 }
+```
+
+## IBM Cloud Pak for Data(ICP4D)
+If your service instance is of ICP4D, below are two ways of initializing the assistant service.
+
+#### 1) Supplying the `username`, `password`, `icp4d_url` and `authentication_type`
+
+The SDK will manage the token for the user
+
+```cs
+    CloudPakForDataAuthenticator authenticator = new CloudPakForDataAuthenticator("<url>", "<username>", "<password>");
+    while(!authenticator.CanAuthenticate())
+    {
+        yield return null;
+    }
+    service = new AssistantService(versionDate, authenticator);
+```
+
+#### 2) Supplying the access token
+
+```cs
+    BearerTokenAuthenticator = new BearerTokenAuthenticator("<accessToken>");
+    while(!authenticator.CanAuthenticate())
+    {
+        yield return null;
+    }
+    service = new AssistantService(versionDate, authenticator);
 ```
 
 ## IBM Cloud Private
@@ -484,5 +478,5 @@ We'd love to highlight cool open-source projects that use this SDK! If you'd lik
 [latest_release_core]: https://github.com/IBM/unity-sdk-core/releases/latest
 [get_unity]: https://unity3d.com/get-unity
 [documentation]: https://watson-developer-cloud.github.io/unity-sdk/
-[ibm-cloud-onboarding]: http://console.bluemix.net/registration?target=/developer/watson&cm_sp=WatsonPlatform-WatsonServices-_-OnPageNavLink-IBMWatson_SDKs-_-Unity
-[watson-dashboard]: https://console.bluemix.net/dashboard/apps?category=watson
+[ibm-cloud-onboarding]: https://cloud.ibm.com/registration?target=/developer/watson&cm_sp=WatsonPlatform-WatsonServices-_-OnPageNavLink-IBMWatson_SDKs-_-Unity
+[watson-dashboard]: https://cloud.ibm.com/

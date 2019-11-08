@@ -21,7 +21,7 @@ using Newtonsoft.Json;
 namespace IBM.Watson.SpeechToText.V1.Model
 {
     /// <summary>
-    /// SpeechRecognitionResult.
+    /// Component results for a speech recognition request.
     /// </summary>
     public class SpeechRecognitionResult
     {
@@ -31,7 +31,7 @@ namespace IBM.Watson.SpeechToText.V1.Model
         /// final.
         /// </summary>
         [JsonProperty("final", NullValueHandling = NullValueHandling.Ignore)]
-        public bool? FinalResults { get; set; }
+        public bool? Final { get; set; }
         /// <summary>
         /// An array of alternative transcripts. The `alternatives` array can include additional requested output such
         /// as word confidence or timestamps.

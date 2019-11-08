@@ -58,6 +58,10 @@ namespace IBM.Watson.Assistant.V2.Model
             /// Constant SUGGESTION for suggestion
             /// </summary>
             public const string SUGGESTION = "suggestion";
+            /// <summary>
+            /// Constant SEARCH for search
+            /// </summary>
+            public const string SEARCH = "search";
             
         }
 
@@ -104,7 +108,7 @@ namespace IBM.Watson.Assistant.V2.Model
         [JsonProperty("time", NullValueHandling = NullValueHandling.Ignore)]
         public long? Time { get; set; }
         /// <summary>
-        /// Whether to send a \"user is typing\" event during the pause.
+        /// Whether to send a "user is typing" event during the pause.
         /// </summary>
         [JsonProperty("typing", NullValueHandling = NullValueHandling.Ignore)]
         public bool? Typing { get; set; }
@@ -147,5 +151,16 @@ namespace IBM.Watson.Assistant.V2.Model
         /// </summary>
         [JsonProperty("suggestions", NullValueHandling = NullValueHandling.Ignore)]
         public List<DialogSuggestion> Suggestions { get; set; }
+        /// <summary>
+        /// The title or introductory text to show before the response. This text is defined in the search skill
+        /// configuration.
+        /// </summary>
+        [JsonProperty("header", NullValueHandling = NullValueHandling.Ignore)]
+        public string Header { get; set; }
+        /// <summary>
+        /// An array of objects containing search results.
+        /// </summary>
+        [JsonProperty("results", NullValueHandling = NullValueHandling.Ignore)]
+        public List<SearchResult> Results { get; set; }
     }
 }

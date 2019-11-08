@@ -21,15 +21,16 @@ using Newtonsoft.Json;
 namespace IBM.Watson.SpeechToText.V1.Model
 {
     /// <summary>
-    /// LanguageModel.
+    /// Information about an existing custom language model.
     /// </summary>
     public class LanguageModel
     {
         /// <summary>
         /// The current status of the custom language model:
-        /// * `pending`: The model was created but is waiting either for training data to be added or for the service to
-        /// finish analyzing added data.
-        /// * `ready`: The model contains data and is ready to be trained.
+        /// * `pending`: The model was created but is waiting either for valid training data to be added or for the
+        /// service to finish analyzing added data.
+        /// * `ready`: The model contains valid data and is ready to be trained. If the model contains a mix of valid
+        /// and invalid resources, you need to set the `strict` parameter to `false` for the training to proceed.
         /// * `training`: The model is currently being trained.
         /// * `available`: The model is trained and ready to use.
         /// * `upgrading`: The model is currently being upgraded.
@@ -66,9 +67,10 @@ namespace IBM.Watson.SpeechToText.V1.Model
 
         /// <summary>
         /// The current status of the custom language model:
-        /// * `pending`: The model was created but is waiting either for training data to be added or for the service to
-        /// finish analyzing added data.
-        /// * `ready`: The model contains data and is ready to be trained.
+        /// * `pending`: The model was created but is waiting either for valid training data to be added or for the
+        /// service to finish analyzing added data.
+        /// * `ready`: The model contains valid data and is ready to be trained. If the model contains a mix of valid
+        /// and invalid resources, you need to set the `strict` parameter to `false` for the training to proceed.
         /// * `training`: The model is currently being trained.
         /// * `available`: The model is trained and ready to use.
         /// * `upgrading`: The model is currently being upgraded.
@@ -90,17 +92,26 @@ namespace IBM.Watson.SpeechToText.V1.Model
         [JsonProperty("created", NullValueHandling = NullValueHandling.Ignore)]
         public string Created { get; set; }
         /// <summary>
+        /// The date and time in Coordinated Universal Time (UTC) at which the custom language model was last modified.
+        /// The `created` and `updated` fields are equal when a language model is first added but has yet to be updated.
+        /// The value is provided in full ISO 8601 format (YYYY-MM-DDThh:mm:ss.sTZD).
+        /// </summary>
+        [JsonProperty("updated", NullValueHandling = NullValueHandling.Ignore)]
+        public string Updated { get; set; }
+        /// <summary>
         /// The language identifier of the custom language model (for example, `en-US`).
         /// </summary>
         [JsonProperty("language", NullValueHandling = NullValueHandling.Ignore)]
         public string Language { get; set; }
         /// <summary>
-        /// The dialect of the language for the custom language model. By default, the dialect matches the language of
-        /// the base model; for example, `en-US` for either of the US English language models. For Spanish models, the
-        /// field indicates the dialect for which the model was created:
-        /// * `es-ES` for Castilian Spanish (the default)
-        /// * `es-LA` for Latin American Spanish
-        /// * `es-US` for North American (Mexican) Spanish.
+        /// The dialect of the language for the custom language model. For non-Spanish models, the field matches the
+        /// language of the base model; for example, `en-US` for either of the US English language models. For Spanish
+        /// models, the field indicates the dialect for which the model was created:
+        /// * `es-ES` for Castilian Spanish (`es-ES` models)
+        /// * `es-LA` for Latin American Spanish (`es-AR`, `es-CL`, `es-CO`, and `es-PE` models)
+        /// * `es-US` for Mexican (North American) Spanish (`es-MX` models)
+        ///
+        /// Dialect values are case-insensitive.
         /// </summary>
         [JsonProperty("dialect", NullValueHandling = NullValueHandling.Ignore)]
         public string Dialect { get; set; }
